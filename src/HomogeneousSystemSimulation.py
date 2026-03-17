@@ -2,7 +2,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from pathlib import Path
-from HomogeneousSystem import homogeneous_system
+from HomogeneousSystem import HomogeneousSystem
 
 def homogeneous_system_plot(u0,p):
     scripts_folder = Path(__file__).resolve().parent.parent / "scripts"
@@ -10,7 +10,7 @@ def homogeneous_system_plot(u0,p):
     t0, tf = 0, 200
     t_eval = np.arange(t0, tf, 0.001)
 
-    sol = solve_ivp(lambda t,u: homogeneous_system(t,u,p), (t0, tf), u0,
+    sol = solve_ivp(lambda t,u: HomogeneousSystem(t,u,6,p), (t0, tf), u0,
                 method='RK45', rtol=1e-6, atol=1e-6, t_eval=t_eval)
 
     def save_plot(x, ys, labels, colors, xlabel, ylabel, filename, title):

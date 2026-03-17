@@ -22,7 +22,11 @@ def network_system_plot(u0, scalar_params, W_file="NormalizedMatrix.npy",ve=Fals
     """
     
     # ------------------- Load connectivity -------------------
-    W = np.load(W_file)
+   
+    
+    root = Path(__file__).resolve().parent.parent
+ 
+    W = np.load( root / "data" / W_file)
     p = {'scalar_params': scalar_params, 'matrix_params': W}
     
     Npop = W.shape[0]
@@ -58,8 +62,10 @@ def network_system_plot(u0, scalar_params, W_file="NormalizedMatrix.npy",ve=Fals
         plt.yticks(fontsize=12)
         plt.title(title, fontsize=16)
         plt.tight_layout()
-        scripts_folder = Path(__file__).resolve().parent.parent / "scripts"
-        plt.savefig(scripts_folder / fname, dpi=300, bbox_inches='tight')
+        
+        save_dir = root / "scripts" / "NetTraj"
+        save_dir.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_dir / fname, dpi=300, bbox_inches='tight')
         plt.close()
     
     # ------------------- Save heatmaps -------------------
@@ -79,4 +85,3 @@ def network_system_plot(u0, scalar_params, W_file="NormalizedMatrix.npy",ve=Fals
         title = rf"{name}, $\epsilon={scalar_params[14]}$, $I_{{ext}}^e={scalar_params[13]}$"
         save_heatmap(data_window, sol.t[-idx_steps:], fname, title=title, colorbar=name)
     
-    return Path(__file__).resolve().parent / "scripts" / "NetTraj"
