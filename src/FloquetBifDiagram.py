@@ -1,28 +1,25 @@
 import numpy as np
-
+import pandas as pd
 from InitPO_2 import InitCondPOHomogeneous_2
 from FloquetExponentsVariationals import ComputeFloquetExponents
+from pathlib import Path
 
-def FloquetBifDiagram(W_file="NormalizedMatrix.npy", stability = False):
+def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
     # Load structural connectivity matrix
    
     root = Path(__file__).resolve().parent.parent
-
-    W = np.load( root / "data" / W_file)
-    p = {'scalar_params': scalar_params, 'matrix_params': W}
-
-    Npop = W.shape[0]
-    Nvariables = 6
-    norm_matrix = W
+    norm_matrix = np.load( root / "data" / W_file)
     
-
     #Compute eigenvalues and eigenvectors of connectivity matrix W
     vapsConn,vepsConn = np.linalg.eig(norm_matrix)
 
     # Define discretization
-    h = 0.05
+    h = 1 #0.05
 
     # Set some parameters
+    Npop = norm_matrix.shape[0]
+    Nvariables = 6
+ 
     params = dict(tau_e = 8,
                 tau_i = 8,
                 tau_se=1,
@@ -61,6 +58,10 @@ def FloquetBifDiagram(W_file="NormalizedMatrix.npy", stability = False):
     # Define vectors for Iext_e and eps axis
     vector_Iext_e = np.linspace(min_Iext_e,max_Iext_e,long_Iext_e+1)
     vector_eps = np.linspace(min_eps,max_eps,long_eps+1)
+    
+    # Store number of positive characteristic exponents among population modes
+    numPositive = np.zeros((long_Iext_e+1, long_eps+1))
+
 
     for idx_Iext_e in range(len(vector_Iext_e)):
         for idx_eps in range(len(vector_eps)):
@@ -116,7 +117,7 @@ def FloquetBifDiagram(W_file="NormalizedMatrix.npy", stability = False):
                     status = 5
                     dataFloquetReal[idx_Iext_e,idx_eps]=np.nan*np.ones(Npop)
                     dataFloquetImaginary[idx_Iext_e,idx_eps]=np.nan*np.ones(Npop)
-
+                    numPositive[idx_Iext_e,idx_eps] = np.nan
 
                     #Update dataStatus accordingly
                     dataStatus[idx_Iext_e,idx_eps] = status
@@ -125,7 +126,10 @@ def FloquetBifDiagram(W_file="NormalizedMatrix.npy", stability = False):
                 #Update dataFloquet accordingly
                 dataFloquetReal[idx_Iext_e,idx_eps]=MaxRealFloquetExp
                 dataFloquetImaginary[idx_Iext_e,idx_eps]=MaxImagFloquetExp
-
+                
+                #Update number of positive char exp
+                numPositive[idx_Iext_e,idx_eps]=np.sum(MaxRealFloquetExp>0)
+                
                 # Show some info
                 print('Rectified Status: ',status)
                 print(MaxRealFloquetExp)
@@ -137,9 +141,48 @@ def FloquetBifDiagram(W_file="NormalizedMatrix.npy", stability = False):
             else:
                 dataFloquetReal[idx_Iext_e,idx_eps]=np.nan*np.ones(Npop)
                 dataFloquetImaginary[idx_Iext_e,idx_eps]=np.nan*np.ones(Npop)
+                numPositive[idx_Iext_e,idx_eps]=np.nan 
+
+
+    # Table structure
+    rows = []
+    dataStatus = dataStatus.astype(int)
+
+    for i in range(len(vector_Iext_e)):
+        for j in range(len(vector_eps)):
+            row = [
+                vector_Iext_e[i],              # Iext_e
+                vector_eps[j],                # eps
+                dataStatus[i, j],             # status
+            ]
+
+            # Floquet exponents (real part)
+            row.extend(dataFloquetReal[i, j, :].tolist())
+
+            # Number of unstable exponents
+            row.append(numPositive[i, j])
+
+            rows.append(row)
+    
+    columns = (
+        ["Iext_e", "eps", "status"] +
+        [f"lambda_{k}" for k in range(Npop)] +
+        ["numPositive"]
+    )
+
 
     # =============== SAVE ALL DATA  ================
     
-    np.savez(root / "scripts" / 'FloquetBifDiagram_Npop={Npop}.npz',vector_Iext_e=vector_Iext_e,vector_eps=vector_eps,dataFloquetReal=dataFloquetReal,dataFloquetImaginary=dataFloquetImaginary,dataStatus=dataStatus)
-    
-    return vector_Iext_e,vector_eps,dataFloquetReal,dataFloquetImaginary,dataStatus
+    #ARRAYS:
+    np.savez(root / "scripts" / f'FloquetBifDiagram_Npop={Npop}.npz',vector_Iext_e=vector_Iext_e,vector_eps=vector_eps,dataFloquetReal=dataFloquetReal,dataStatus=dataStatus, numPositive=numPositive)
+   
+
+    df = pd.DataFrame(rows, columns=columns)
+
+    df.to_csv(
+        root / "scripts" / "master_stability_table.txt",
+        sep=" ",
+        index=False
+    )
+     
+    return vector_Iext_e,vector_eps,dataFloquetReal,dataStatus,numPositive
