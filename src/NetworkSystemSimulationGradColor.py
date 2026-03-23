@@ -48,44 +48,26 @@ def network_system_plot(u0, scalar_params, W_file="NormalizedMatrix.npy",ve=Fals
     r_i = sol.y[Npop*idx_ri:Npop*idx_vi, :]
     v_i = sol.y[Npop*idx_vi:Npop*idx_si, :]
     s_i = sol.y[Npop*idx_si:, :]
-        
-   
     
-
-
     # ------------------- Helper to save heatmap -------------------
-    def save_heatmap(data_matrix, t, fname, colorbar, clim=(-2,2),
-                     xlabel="Time (ms)", ylabel="Population i", title=""):
-
+    def save_heatmap(data_matrix, t, fname, colorbar,  clim=(-2,2), xlabel="Time (ms)", ylabel="Population i", title=""):
         plt.figure(figsize=(10,5))
-        plt.imshow(
-            data_matrix,
-            aspect='auto',
-            origin='lower',
-            extent=[t[0], t[-1], 0, data_matrix.shape[0]],
-            cmap='RdBu',
-            vmin=clim[0],
-            vmax=clim[1],
-            interpolation='nearest'   
-        )
-
+        plt.imshow(data_matrix, aspect='auto', origin='lower',
+                   extent=[t[0], t[-1], 1, data_matrix.shape[0]],
+                   cmap='RdBu', vmin=clim[0], vmax=clim[1])
         plt.colorbar(label=colorbar)
         plt.xlabel(xlabel, fontsize=14)
         plt.ylabel(ylabel, fontsize=14)
         plt.xticks(fontsize=12)
-        plt.yticks(
-            np.arange(Npop) + 0.5,
-            [f"Pop {i}" for i in range(1, Npop+1)],
-            fontsize=10
-        )
+        plt.yticks(fontsize=12)
         plt.title(title, fontsize=16)
         plt.tight_layout()
-
+        
         save_dir = root / "scripts" / "NetTraj"
         save_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(save_dir / fname, dpi=300, bbox_inches='tight')
-        plt.close()    
-
+        plt.close()
+    
     # ------------------- Save heatmaps -------------------
     last_ms = 100
     idx_steps = int(last_ms/dt)

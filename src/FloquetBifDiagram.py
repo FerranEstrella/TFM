@@ -55,6 +55,12 @@ def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
     # Initialize empty (long_Iext_e,long_eps) array structure to store status of each point
     dataStatus = np.zeros((long_Iext_e+1,long_eps+1))
 
+    # Initialize empty (long_Iext_e,long_eps) array structure to store IC of PO
+    ICs = np.zeros((long_Iext_e+1,long_eps+1))
+
+    # Initialize empty (long_Iext_e,long_eps) array structure to store T of PO
+    Ts = np.zeros((long_Iext_e+1,long_eps+1))
+
     # Define vectors for Iext_e and eps axis
     vector_Iext_e = np.linspace(min_Iext_e,max_Iext_e,long_Iext_e+1)
     vector_eps = np.linspace(min_eps,max_eps,long_eps+1)
@@ -111,6 +117,10 @@ def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
                 #Save imaginary part of the previous maximum values
                 MaxImagFloquetExp = np.imag(matrixFloquetExp)[indicesMaxReal,np.arange(Npop)]
 
+                #Update ICs and Ts accordingly
+                ICs[idx_Iext_e,idx_eps] = initCond
+                Ts[idx_Iext_e,idx_eps] = T
+
                 # Check that first Floquet exponent is zero
                 if np.abs(MaxImagFloquetExp[0])>10**(-4):
                     # Status 5 encodes Floquet exponents errors
@@ -141,7 +151,10 @@ def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
             else:
                 dataFloquetReal[idx_Iext_e,idx_eps]=np.nan*np.ones(Npop)
                 dataFloquetImaginary[idx_Iext_e,idx_eps]=np.nan*np.ones(Npop)
-                numPositive[idx_Iext_e,idx_eps]=np.nan 
+                numPositive[idx_Iext_e,idx_eps]= np.nan 
+                ICs[idx_Iext_e,idx_eps] = np.nan
+                Ts[idx_Iext_e,idx_eps] = np.nan
+
 
 
     # Table structure
@@ -151,9 +164,11 @@ def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
     for i in range(len(vector_Iext_e)):
         for j in range(len(vector_eps)):
             row = [
-                vector_Iext_e[i],              # Iext_e
-                vector_eps[j],                # eps
-                dataStatus[i, j],             # status
+                vector_Iext_e[i],              
+                vector_eps[j],                
+                dataStatus[i, j],
+                ICs[i, j],
+                Ts[i, j],           
             ]
 
             # Floquet exponents (real part)
@@ -165,7 +180,7 @@ def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
             rows.append(row)
     
     columns = (
-        ["Iext_e", "eps", "status"] +
+        ["Iext_e", "eps", "status", "PO", "T" ] +
         [f"lambda_{k}" for k in range(Npop)] +
         ["numPositive"]
     )
@@ -174,7 +189,7 @@ def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
     # =============== SAVE ALL DATA  ================
     
     #ARRAYS:
-    np.savez(root / "scripts" / f'FloquetBifDiagram_Npop={Npop}.npz',vector_Iext_e=vector_Iext_e,vector_eps=vector_eps,dataFloquetReal=dataFloquetReal,dataStatus=dataStatus, numPositive=numPositive)
+    np.savez(root / "scripts" / f'FloquetBifDiagram_Npop={Npop}.npz',vector_Iext_e=vector_Iext_e,vector_eps=vector_eps,dataFloquetReal=dataFloquetReal,dataStatus=dataStatus, numPositive=numPositive, ICs=ICs, Ts=Ts)
    
 
     df = pd.DataFrame(rows, columns=columns)
@@ -185,4 +200,4 @@ def FloquetBifDiagram(W_file="normalized_matrix_4cluster.npy"):
         index=False
     )
      
-    return vector_Iext_e,vector_eps,dataFloquetReal,dataStatus,numPositive
+    return vector_Iext_e,vector_eps,dataFloquetReal,dataStatus,numPositive, ICs, Ts

@@ -8,7 +8,7 @@ sys.path.append(str(root / "src"))
 from NetworkSystemSimulation import network_system_plot
 from PlotFloquetExponents import PlotFloquetExponents
 from FloquetBifDiagram import FloquetBifDiagram
-
+from InitPO_2 import InitCondPOHomogeneous_2
 
 
 
@@ -108,18 +108,22 @@ if plotMSF==1:
                     Jie = 13,
                     Iext_i=0)
 
-    #I_eps_plots=[[[7,5],[9,5],[11,5],[13,5]],[[6,9],[8,9],[9.5,9],[12,9]],[[4,12],[6,12],[8,12],[12,12]],[[5,20],[7,20],[7.5,20],[8,20]]]
-    
-    I_eps_plots=[[[7,10],[8,10],[9,10],[10,10]]]
-    
-    for I_eps in I_eps_plots:
-        PlotFloquetExponents(W_redu,Nvariables,4,params,I_eps,True)
-
-    #I_eps = [[12,9],[9.5,9],[8,12],[12,12]]
-    I_eps=[[7,10]]
     p = [8,8,1,5,-5,-5,1,1,5,13,5,13,0]
-    u0 = np.zeros(6*4)
+    
+    #I_eps_plots=[[[7,5],[9,5],[11,5],[13,5]],[[6,9],[8,9],[9.5,9],[12,9]],[[4,12],[6,12],[8,12],[12,12]],[[5,20],[7,20],[7.5,20],[8,20]]]
+    #I_eps_plots=[[[7,10],[8,10],[9,10],[10,10]]]
+    
+    #for I_eps in I_eps_plots:
+        #PlotFloquetExponents(W_redu,Nvariables,4,params,I_eps,True)
+
+
+    I_eps = [[12,9],[9.5,9],[8,9],[6,12],[8,12],[12,12]]
+    #u0 = np.zeros(6*4)
     for i in I_eps:
+        params['Iext_e'] = i[0] 
+        params['eps'] = i[1]
+        status,u0,T = InitCondPOHomogeneous_2(6,params)
+        u0 = np.tile(u0, 4)
         network_system_plot(u0, p+i, W_file="normalized_matrix_4cluster.npy",ve=True)
 
 
