@@ -7,15 +7,19 @@ import matplotlib.cm as cm
 from matplotlib.lines import Line2D
 from matplotlib.transforms import Bbox
 
-def PlotFloquetExponents(W,Nvariables,Npop,ModelParams,NetworkParams,save):
-     
+def PlotFloquetExponents(params,NetworkParams,W,save):
+    
+    #NetworkParams: Set of (tuples) of explored (pairs of) parameters
+
+    Npop=W.shape[0]
+    
     #Compute eigenvalues and eigenvectors of connectivity matrix W
     vapsConn,vepsConn = np.linalg.eig(W)
 
     #Define tuple of invented vaps connectivity matrix
     vapsCurve = np.arange(-1,1+0.005,0.005)
 
-    #Define colormap and vector of colors of the length of the tuple ModelParams
+    #Define colormap and vector of colors
     colormap = cm.Set1
     colors_vector = colormap(np.linspace(0, 0.5, len(NetworkParams)))
 
@@ -28,19 +32,19 @@ def PlotFloquetExponents(W,Nvariables,Npop,ModelParams,NetworkParams,save):
         #Get current pair of parameters for the simulation
         tuple = NetworkParams[idx]
 
-        #Get pairs of (Iext_e,eps) parameters for network simulation
+        #Get pairs of parameters for network simulation
         Iext_e = tuple[0]
         eps = tuple[1]
                 
         #Update parameters model with networks params for current simulation
-        ModelParams['Iext_e'] = Iext_e
-        ModelParams['eps'] = eps
+        params['Iext_e'] = Iext_e
+        params['eps'] = eps
 
         #Compute FloquetExponents and Multipliers for current pair of parameters (Iext_e,eps)
-        matrixFloquetExp,matrixFloquetMult = RoutineFloquet(vapsConn,Nvariables,Npop,ModelParams,len(vapsConn))
+        matrixFloquetExp,matrixFloquetMult = RoutineFloquet(vapsConn,params)
 
         #Compute Continuous curve of FloquetExponents and Multipliers for current pair of parameters (Iext_e,eps)
-        InventedMatrixFloquetExp,InventedMatrixFloquetMult = RoutineFloquet(vapsCurve,Nvariables,Npop,ModelParams,len(vapsCurve))
+        InventedMatrixFloquetExp,InventedMatrixFloquetMult = RoutineFloquet(vapsCurve,params)
 
         #Save maximum of the REAL part among the Nvariables FloquetExponents per each eigenvalue of W
         matrixMaxRealFloquetExp[idx,:]  = np.amax(np.real(matrixFloquetExp),axis=0)

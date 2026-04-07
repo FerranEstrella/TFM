@@ -1,17 +1,7 @@
-# Network.py
-
 import numpy as np
 
-def network( u, p, t):
-    """
-    du: derivative vector (in-place update)
-    u: state vector (contains in order the vectors r_e, v_e, s_e, r_i, v_i, s_i)
-    p: dictionary with keys 'scalar_params' and 'matrix_params'
-    t: time
-    """
-    scalar_params = p['scalar_params']
-    W = p['matrix_params']
-    
+def NetworkSystem(t0,u,params,W):
+
     Npop = W.shape[0]
 
     # Indices
@@ -25,10 +15,26 @@ def network( u, p, t):
     v_i_vector = u[Npop*idx_vi:Npop*idx_si]
     s_i_vector = u[Npop*idx_si:]
 
-    # Parameters
-    (tau_e, tau_i, tau_se, tau_si, nu_e, nu_i, Delta_e, Delta_i,
-     Jee, Jei, Jii, Jie, Iext_i, Iext_e, eps) = scalar_params
+    
+    #---------  PARAMETERS MODEL  ---------
+    tau_e = params['tau_e']
+    tau_i = params['tau_i']
+    tau_se = params['tau_se']
+    tau_si = params['tau_si']
+    Delta_e = params['Delta_e']
+    Delta_i = params['Delta_i']
+    nu_e = params['nu_e']
+    nu_i = params['nu_i']
+    Jee = params['Jee']
+    Jei = params['Jei']
+    Jii = params['Jii']
+    Jie = params['Jie']
+    Iext_e = params['Iext_e']
+    Iext_i = params['Iext_i']
+    eps = params['eps']
 
+
+ 
     # Compute coupling sum
     coupling_sum = W @ s_e_vector
 
@@ -44,61 +50,37 @@ def network( u, p, t):
     return du
 
 
-def jacobian_network(M, u, p, t):
-    """
-    M: Jacobian matrix (in-place update)
-    u: state vector
-    p: dictionary
-    t: time
-    """
-    scalar_params = p['scalar_params']
-    W = p['matrix_params']
-    
-    Npop = W.shape[0]
-    idx_ve, idx_se, idx_ri, idx_vi, idx_si = 1,2,3,4,5
+def JacobianNetworkSystemEigenmode(x,params,eig):
 
-    r_e_vector = u[0:Npop]
-    v_e_vector = u[Npop*idx_ve:Npop*idx_se]
-    s_e_vector = u[Npop*idx_se:Npop*idx_ri]
-    r_i_vector = u[Npop*idx_ri:Npop*idx_vi]
-    v_i_vector = u[Npop*idx_vi:Npop*idx_si]
-    s_i_vector = u[Npop*idx_si:]
+        #---------  VARIABLES MODEL  ---------
+        #Firing rates E-I population
+        r_e = x[0]
+        r_i = x[3]
+        #Membrane potential voltage E-I population
+        v_e = x[1]
+        v_i = x[4]
+        #Dynamics synapses
+        s_e = x[2]
+        s_i = x[5]
 
-    (tau_e, tau_i, tau_se, tau_si, nu_e, nu_i, Delta_e, Delta_i,
-     Jee, Jei, Jii, Jie, Iext_i, Iext_e, eps) = scalar_params
+        #---------  PARAMETERS MODEL  ---------
+        tau_e = params['tau_e']
+        tau_i = params['tau_i']
+        tau_se = params['tau_se']
+        tau_si = params['tau_si']
+        Delta_e = params['Delta_e']
+        Delta_i = params['Delta_i']
+        nu_e = params['nu_e']
+        nu_i = params['nu_i']
+        Jee = params['Jee']
+        Jei = params['Jei']
+        Jii = params['Jii']
+        Jie = params['Jie']
+        Iext_e = params['Iext_e']
+        Iext_i = params['Iext_i']
+        eps = params['eps']
 
-    # Clear matrix
-    M.fill(0)
-
-    # Diagonal blocks
-    M[0:Npop, 0:Npop] = 0  # r_e derivatives
-    # Partial r_e
-    M[0:Npop, Npop*idx_ve:Npop*idx_se] = (2/tau_e)*r_e_vector[:,None]
-    M[0:Npop, 0:Npop] = (2/tau_e)*v_e_vector[:,None]
-
-    # Partial v_e
-    M[Npop*idx_ve:Npop*idx_se, 0:Npop] = -2*r_e_vector*tau_e*np.pi**2
-    M[Npop*idx_ve:Npop*idx_se, Npop*idx_ve:Npop*idx_se] = 2*v_e_vector/tau_e
-    M[Npop*idx_ve:Npop*idx_se, Npop*idx_se:Npop*idx_ri] = Jee
-    M[Npop*idx_ve:Npop*idx_se, Npop*idx_si:] = -Jei
-    # Coupling sum contribution
-    M[Npop*idx_ve:Npop*idx_se, Npop*idx_se:Npop*idx_ri] += eps * W
-
-    # Partial s_e
-    M[Npop*idx_se:Npop*idx_ri, 0:Npop] = 1/tau_se
-    M[Npop*idx_se:Npop*idx_ri, Npop*idx_se:Npop*idx_ri] = -1/tau_se
-
-    # Partial r_i
-    M[Npop*idx_ri:Npop*idx_vi, Npop*idx_ri:Npop*idx_vi] = (2/tau_i)*v_i_vector[:,None]
-    M[Npop*idx_ri:Npop*idx_vi, Npop*idx_vi:Npop*idx_si] = (2/tau_i)*r_i_vector[:,None]
-
-    # Partial v_i
-    M[Npop*idx_vi:Npop*idx_si, Npop*idx_ri:Npop*idx_vi] = -2*r_i_vector*tau_i*np.pi**2
-    M[Npop*idx_vi:Npop*idx_si, Npop*idx_vi:Npop*idx_si] = (2/tau_i)*v_i_vector[:,None]
-    M[Npop*idx_vi:Npop*idx_si, Npop*idx_se:Npop*idx_ri] = Jie + eps*W
-    M[Npop*idx_vi:Npop*idx_si, Npop*idx_si:] = -Jii
-
-    # Partial s_i
-    M[Npop*idx_si:, Npop*idx_ri:Npop*idx_vi] = 1/tau_si
-    M[Npop*idx_si:, Npop*idx_si:] = -1/tau_si
-
+        #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  DIFFERENTIAL FIELD MODEL EQUATIONS  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        calJ = np.array([[(2*v_e)/tau_e, (2*r_e)/tau_e, 0, 0, 0, 0],[(-2*r_e*(tau_e*np.pi)**2)/tau_e, (2*v_e)/tau_e, Jee+eig*eps, 0, 0, -Jei],[1/tau_se, 0, -1/tau_se, 0, 0, 0],[0, 0, 0, 2*v_i/tau_i, (2*r_i)/tau_i, 0],[0, 0, Jie+eig*eps, (-2*r_i*(tau_i*np.pi)**2)/tau_i, (2*v_i)/tau_i,-Jii],[0, 0, 0, 1/tau_si, 0, -1/tau_si]])
+        
+        return calJ                                  

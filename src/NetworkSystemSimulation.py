@@ -4,40 +4,22 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from pathlib import Path
 
-from NetworkSystem import network  
+from NetworkSystem import NetworkSystem  
 
-def network_system_plot(u0, scalar_params, W_file="NormalizedMatrix.npy",ve=False):
-    """
-    Simulate the network system and save heatmaps for r_e, v_e, s_e, r_i, v_i, s_i
-    directly in the scripts folder.
-    
-    Parameters
-    ----------
-    u0 : np.ndarray
-        Initial condition vector of size Npop*Nvariables
-    scalar_params : list or np.ndarray
-        List of scalar parameters [tau_e, tau_i, tau_se, ...]
-    W_file : str
-        Path to .npz file containing the connectivity matrix under key 'normalized_matrix'
-    """
+def NetworkSystemPlot(u0, params, W_file="NormalizedMatrix.npy",ve=False):
     
     # ------------------- Load connectivity -------------------
    
-    
     root = Path(__file__).resolve().parent.parent
- 
     W = np.load( root / "data" / W_file)
-    p = {'scalar_params': scalar_params, 'matrix_params': W}
-    
     Npop = W.shape[0]
-    Nvariables = 6
     
     # ------------------- Time span -------------------
     t0, tf, dt = 0, 1000, 0.01
     t_eval = np.arange(t0, tf, dt)
     
     # ------------------- Solve ODE -------------------
-    sol = solve_ivp(lambda t, u: network(u, p, t),
+    sol = solve_ivp(lambda t, u: NetworkSystem(t,u,params,W),
                     (t0, tf), u0, t_eval=t_eval, method='RK45', rtol=1e-6, atol=1e-6)
     
     # ------------------- Unpack variables -------------------
@@ -50,8 +32,6 @@ def network_system_plot(u0, scalar_params, W_file="NormalizedMatrix.npy",ve=Fals
     s_i = sol.y[Npop*idx_si:, :]
         
    
-    
-
 
     # ------------------- Helper to save heatmap -------------------
     def save_heatmap(data_matrix, t, fname, colorbar, clim=(-2,2),
@@ -99,7 +79,7 @@ def network_system_plot(u0, scalar_params, W_file="NormalizedMatrix.npy",ve=Fals
     for name, matrix in var_dict.items():
         data_window = matrix[:, -idx_steps:]
         W_name = os.path.splitext(os.path.basename(W_file))[0]
-        fname = f"{name}_u0first={u0[0]:.3f}_u0last={u0[-1]:.3f}_eps={scalar_params[14]}_Iext_e={scalar_params[13]}_{W_name}.png"
-        title = rf"{name}, $\epsilon={scalar_params[14]}$, $I_{{ext}}^e={scalar_params[13]}$"
+        fname = f"{name}_u0first={u0[0]:.3f}_u0last={u0[-1]:.3f}_eps={params['eps']}_Iext_e={params['Iext_e']}_{W_name}.png"
+        title = rf"{name}, $\epsilon={params['eps']}$, $I_{{ext}}^e={params['Iext_e']}$"
         save_heatmap(data_window, sol.t[-idx_steps:], fname, title=title, colorbar=name)
     
