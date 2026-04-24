@@ -11,11 +11,15 @@ def NetworkSystemPlot(u0, params, W_file="NormalizedMatrix.npy",ve=False):
     # ------------------- Load connectivity -------------------
    
     root = Path(__file__).resolve().parent.parent
-    W = np.load( root / "data" / W_file)
+    #W = np.load( root / "data" / W_file)
+    
+    # Homogeneous case:
+    W = np.array([[1.0]])
+    
     Npop = W.shape[0]
     
     # ------------------- Time span -------------------
-    t0, tf, dt = 0, 1000, 0.01
+    t0, tf, dt = 0, 10, 0.01 #1000
     t_eval = np.arange(t0, tf, dt)
     
     # ------------------- Solve ODE -------------------
@@ -67,7 +71,7 @@ def NetworkSystemPlot(u0, params, W_file="NormalizedMatrix.npy",ve=False):
         plt.close()    
 
     # ------------------- Save heatmaps -------------------
-    last_ms = 100
+    last_ms = 10 #100
     idx_steps = int(last_ms/dt)
     
     var_dict = {"r_e": r_e, "v_e": v_e, "s_e": s_e,

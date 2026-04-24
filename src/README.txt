@@ -24,12 +24,16 @@ DESTABILIZATION STATIONARY E.P OF HOMOGENEOUS SYSTEM
 13. RoutineEqPoints: Function to compute the Npop x Nvariables characteristic exponents of the large-scale brain model for a fixed set of parameter combinations, for which an e.p is the stationary solution. 
 14. PlotVapsEqPoints: Function to plot the real part of the Npop max characteristic exponents computed with RoutineEqPoints for a set of pairs (Iext,eps)
 
+GENERAL DESTABILIZATION STATIONARY STATES OF HOMOGENEOUS SYSTEM
 15. EqPointsBifDiagram: Function to compute the N_pop characteristic exponents with maximum real part among the considered range of parameters, for those parameters in which an equilibrium point has been determined. Based on the computation done in FloquetBifDiagram
 
 16. BifDiagram: Function which merges the data from FloquetBifDiagram and EqPointsBifDiagram
 
 17. BifDiagramPlot: Function to plot the maximum Floquet/characteristic exponents and number of positive Floquet/characteristic exponents for the considered grid of parameters in the generated dataset by BifDiagram
 
+PI-DeepONet IMPLEMENTATION
+
+18. PIDeepONet: Code which implements the Physics-Informed DeepONet architecture for predicting the dynamics of the homogeneous system
 
 
 
