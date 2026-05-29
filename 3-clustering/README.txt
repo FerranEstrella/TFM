@@ -1,0 +1,2 @@
+1. BrainClusters: HTML file representing the spatial distribution of the nodes in the structural connectivity and the associated clustering distribution.
+2. SpectralClustering: Functions to compute the spectral clustering of the original structural connectivity matrix and quality assessment.
